@@ -16,8 +16,8 @@ jobs:
           sudo apt update
           sudo apt remove -y live-build
           sudo apt install -y debootstrap squashfs-tools xorriso isolinux syslinux-common syslinux-utils wget
-          wget http://deb.debian.org/debian/pool/main/l/live-build/live-build_20250612_all.deb
-          sudo dpkg -i live-build_20250612_all.deb || sudo apt-get install -f -y
+          wget http://deb.debian.org/debian/pool/main/l/live-build/live-build_20250814_all.deb
+          sudo dpkg -i live-build_20250814_all.deb || sudo apt-get install -f -y
           
       - name: Ensure hooks ae executable
         run: chmod +x nexiliumos/config/hooks/normal/*.hook.chroot
