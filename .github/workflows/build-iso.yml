@@ -15,7 +15,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt remove -y live-build
-          sudo apt install -y debootstrap squashfs-tools xorriso isolinux syslinux-common syslinux-utils wget
+          sudo apt install -y debootstrap squashfs-tools xorriso isolinux syslinux-common syslinux-utils wget debian-archive-keyring
           wget http://deb.debian.org/debian/pool/main/l/live-build/live-build_20250814_all.deb
           sudo dpkg -i live-build_20250814_all.deb || sudo apt-get install -f -y
           
