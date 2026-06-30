@@ -23,12 +23,7 @@ jobs:
       - name: Configure live-build
         run: |
           cd nexiliumos
-          lb config \
-          --distribution trixie \
-          --architecture amd64 \
-          --mirror-bootstrap http://deb.debian.org/debian \
-          --mirror-chroot http://deb.debian.org/debian \
-          --mirror-binary http://deb.debian.org/debian
+          lb config --distribution trixie --architecture amd64 --mirror-bootstrap http://deb.debian.org/debian --mirror-chroot http://deb.debian.org/debian --mirror-binary http://deb.debian.org/debian --mirror-chroot-security http://security.debian.org/debian-security --mirror-binary-security http://security.debian.org/debian-security
 
       - name: Build ISO
         run: |
