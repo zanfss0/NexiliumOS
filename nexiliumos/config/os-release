@@ -1,0 +1,6 @@
+NAME="NexiliumOS"
+VERSION="0.1"
+ID=nexiliumos
+ID_LIKE=debian
+PRETTY_NAME="NexiliumOS 0.1 (Trixie)"
+HOME_URL="https://github.com/kkrafale/Caelum-Project"
