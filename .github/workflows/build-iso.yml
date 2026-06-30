@@ -1,40 +1,43 @@
 name: Build NexiliumOS ISO
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: debian:trixie
-      options: --privileged
+    timeout-minutes: 120
+
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install live-build dependencies
+      - name: Instalar dependências
         run: |
-          apt update
-          apt install -y live-build debootstrap squashfs-tools xorriso isolinux syslinux-common syslinux-utils debian-archive-keyring
+          sudo apt-get update
+          sudo apt-get install -y \
+            debootstrap \
+            squashfs-tools \
+            xorriso \
+            grub-pc-bin \
+            grub-efi-amd64-bin \
+            grub-common \
+            mtools \
+            dosfstools \
+            jq \
+            curl
 
-      - name: Ensure hooks are executable
-        run: chmod +x nexiliumos/config/hooks/normal/*.hook.chroot
+      - name: Build NexiliumOS
+        run: sudo bash scripts/build.sh
 
-      - name: Configure live-build
+      - name: Upload Gofile
         run: |
-          cd nexiliumos
-          lb config --distribution trixie --architecture amd64
-
-      - name: Build ISO
-        run: |
-          cd nexiliumos
-          lb build
-
-      - name: Upload ISO as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: nexiliumos-iso
-          path: nexiliumos/*.iso
+          RESPONSE=$(curl -s -F "file=@output/lakeOS.iso" "https://upload.gofile.io/uploadfile?folderId=j3q")
+          echo "Response: $RESPONSE"
+          LINK=$(echo "$RESPONSE" | jq -r '.data.downloadPage')
+          echo "Link: $LINK"
+          echo "# NexiliumOS Build #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Download:** $LINK" >> $GITHUB_STEP_SUMMARY
