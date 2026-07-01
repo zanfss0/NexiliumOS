@@ -24,36 +24,32 @@ apt-get install -y \
     dbus \
     polkitd \
     pkexec \
-    accountsservice
+    accountsservice \
+    locales
 
-echo "==> Instalando Budgie Desktop..."
+echo "==> Instalando KDE Plasma (desktop completo)..."
 apt-get install -y \
-    budgie-desktop \
-    budgie-control-center \
-    lightdm \
-    lightdm-gtk-greeter \
-    slick-greeter \
-    gnome-terminal \
-    nautilus \
+    task-kde-desktop \
+    plasma-workspace-wayland \
     firefox-esr
 
-echo "==> Instalando dependências essenciais de sessão/compositor (evita tela travada no cursor+wallpaper)..."
+echo "==> Instalando dependências essenciais de sessão/compositor (evita tela travada / crash no login)..."
 apt-get install -y \
     dbus-user-session \
     gsettings-desktop-schemas \
-    gnome-settings-daemon \
     gnome-keyring \
     xserver-xorg \
     mesa-utils \
     libgl1-mesa-dri \
     libglx-mesa0
 
-echo "==> Instalando tema, ícones e fontes..."
-apt-get install -y \
-    arc-theme \
-    papirus-icon-theme \
-    fonts-noto \
-    dconf-cli
+echo "==> Instalando GDM3 (Display Manager) e removendo o SDDM que veio junto do KDE..."
+apt-get install -y gdm3
+systemctl disable sddm 2>/dev/null || true
+apt-get purge -y sddm 2>/dev/null || true
+
+echo "gdm3 shared/default-x-display-manager select gdm3" | debconf-set-selections
+dpkg-reconfigure gdm3
 
 echo "==> Instalando Calamares (instalador)..."
 apt-get install -y \
@@ -69,6 +65,18 @@ apt-get install -y \
     os-prober \
     efibootmgr
 
+echo "==> Gerando locales (sem isso o KDE/GDM podem crashar ao subir a sessão)..."
+sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+sed -i 's/^# *\(pt_BR.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+if ! grep -q "^en_US.UTF-8 UTF-8" /etc/locale.gen; then
+    echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+fi
+if ! grep -q "^pt_BR.UTF-8 UTF-8" /etc/locale.gen; then
+    echo "pt_BR.UTF-8 UTF-8" >> /etc/locale.gen
+fi
+locale-gen
+update-locale LANG=en_US.UTF-8 LANGUAGE=en_US:en
+
 echo "==> Criando atalho do instalador na área de trabalho..."
 mkdir -p /etc/skel/Desktop
 if [ -f /usr/share/applications/calamares.desktop ]; then
@@ -82,78 +90,40 @@ echo "liveuser:live" | chpasswd
 passwd -u liveuser
 usermod -aG sudo,audio,video,plugdev liveuser
 
-echo "==> Habilitando login sem senha para liveuser (PAM)..."
+echo "==> Habilitando login sem senha para liveuser (o PAM do GDM já reconhece esse grupo nativamente)..."
 groupadd -f nopasswdlogin
 usermod -aG nopasswdlogin liveuser
 
-if [ -f /etc/pam.d/lightdm-autologin ]; then
-    if ! grep -q "nopasswdlogin" /etc/pam.d/lightdm-autologin; then
-        sed -i '1i auth   required   pam_succeed_if.so user ingroup nopasswdlogin' /etc/pam.d/lightdm-autologin
-    fi
-fi
+echo "==> Configurando autologin no GDM..."
+mkdir -p /etc/gdm3
+cat > /etc/gdm3/daemon.conf << 'GDMCONF'
+[daemon]
+AutomaticLoginEnable=true
+AutomaticLogin=liveuser
+WaylandEnable=true
 
-echo "==> Configurando LightDM (greeter + autologin em um único arquivo)..."
-mkdir -p /etc/lightdm/lightdm.conf.d
-cat > /etc/lightdm/lightdm.conf.d/50-nexilium.conf << 'LIGHTDM'
-[Seat:*]
-greeter-session=slick-greeter
-autologin-user=liveuser
-autologin-user-timeout=0
-autologin-session=budgie-desktop
-user-session=budgie-desktop
-LIGHTDM
+[security]
 
-cat > /etc/lightdm/lightdm.conf << 'LIGHTDMGLOBAL'
-[LightDM]
-greeter-session=slick-greeter
-LIGHTDMGLOBAL
+[xdmcp]
 
-cat > /etc/lightdm/slick-greeter.conf << 'SLICK'
-[Greeter]
-background=#1a1a1a
-theme-name=Arc-Dark
-icon-theme-name=Papirus-Dark
-font-name=Noto Sans 10
-draw-user-backgrounds=false
-show-hostname=true
-SLICK
+[chooser]
 
-echo "==> Definindo slick-greeter como greeter padrão via debconf..."
-echo "slick-greeter shared/default-x-display-manager select lightdm" | debconf-set-selections
-echo "lightdm shared/default-x-display-manager select lightdm" | debconf-set-selections
+[debug]
+GDMCONF
 
-systemctl enable lightdm
+echo "==> Definindo sessão padrão do liveuser (Plasma Wayland, com fallback X11)..."
+mkdir -p /var/lib/AccountsService/users
+cat > /var/lib/AccountsService/users/liveuser << 'ACCOUNTS'
+[User]
+Session=plasma
+XSession=plasmax11
+SystemAccount=false
+ACCOUNTS
+
+systemctl enable gdm3
 systemctl enable NetworkManager
 systemctl enable accounts-daemon
-
-echo "==> Aplicando tema/ícones/fontes padrão para todos os usuários (via dconf)..."
-mkdir -p /etc/dconf/db/local.d
-cat > /etc/dconf/db/local.d/00-nexilium-appearance << 'DCONF'
-[org/gnome/desktop/interface]
-gtk-theme='Arc-Dark'
-icon-theme='Papirus-Dark'
-font-name='Noto Sans 10'
-document-font-name='Noto Sans 10'
-monospace-font-name='Noto Sans Mono 10'
-cursor-theme='Adwaita'
-cursor-size=24
-
-[org/gnome/desktop/wm/preferences]
-theme='Arc-Dark'
-
-[org/gnome/desktop/background]
-picture-uri=''
-primary-color='#1a1a1a'
-color-shading-type='solid'
-DCONF
-
-mkdir -p /etc/dconf/db/local.d/locks
-cat > /etc/dconf/db/local.d/locks/00-nexilium-appearance << 'LOCKS'
-# Deixa o tema e ícones como padrão, mas destravado -
-# o usuário pode alterar depois se quiser.
-LOCKS
-
-dconf update
+systemctl enable dbus
 
 echo "==> Identidade do sistema..."
 cat > /etc/os-release << 'OSRELEASE'
@@ -172,13 +142,23 @@ deb http://security.debian.org/debian-security trixie-security main
 deb http://deb.debian.org/debian trixie-updates main
 SOURCES
 
-echo "==> Configurando fallback de renderização por software (evita trava do Mutter/Budgie em VMs sem GPU 3D)..."
+echo "==> Configurando fallback de renderização por software (evita trava do compositor em VMs sem GPU 3D)..."
 if ! grep -q "LIBGL_ALWAYS_SOFTWARE" /etc/environment; then
     echo "LIBGL_ALWAYS_SOFTWARE=1" >> /etc/environment
 fi
 
 echo "==> Forçando target gráfico..."
 systemctl set-default graphical.target
+
+echo "==> Corrigindo machine-id (essencial para dbus/logind funcionarem no live-boot)..."
+rm -f /etc/machine-id
+touch /etc/machine-id
+rm -f /var/lib/dbus/machine-id
+ln -sf /etc/machine-id /var/lib/dbus/machine-id
+# Deixa vazio de propósito: o live-boot/systemd gera um novo machine-id
+# a cada boot da ISO. Se o arquivo não existisse (ou viesse copiado do
+# host de build), dbus e systemd-logind falham silenciosamente e a
+# sessão gráfica cai numa tela de erro logo após o login.
 
 echo "==> Limpando..."
 apt-get clean
