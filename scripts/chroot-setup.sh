@@ -22,6 +22,21 @@ echo "==> Removendo o SDDM que veio junto do KDE (usamos GDM como display manage
 systemctl disable sddm 2>/dev/null || true
 apt-get purge -y sddm 2>/dev/null || true
 
+echo "==> Removendo calamares-settings-debian e aplicando nossa config do Calamares..."
+# Esse pacote briga com nossos arquivos em /etc/calamares (o post-install
+# dele espera gerenciar settings.conf/branding sozinho). Purga ele e só
+# então copia nossa config, garantindo que não sobra nada do branding
+# padrão do Debian por cima.
+apt-get purge -y calamares-settings-debian 2>/dev/null || true
+rm -rf /etc/calamares
+mkdir -p /etc/calamares
+if [ -d /tmp/calamares-config ]; then
+    cp -r /tmp/calamares-config/. /etc/calamares/
+    rm -rf /tmp/calamares-config
+else
+    echo "AVISO: /tmp/calamares-config não encontrado, Calamares ficará com config incompleta." >&2
+fi
+
 echo "gdm3 shared/default-x-display-manager select gdm3" | debconf-set-selections
 dpkg-reconfigure gdm3
 
