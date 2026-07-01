@@ -59,12 +59,22 @@ POLKIT
 echo "==> Criando usuário liveuser..."
 useradd -m -s /bin/bash liveuser
 echo "liveuser:live" | chpasswd
-passwd -u liveuser
 usermod -aG sudo,audio,video,plugdev liveuser
 
-echo "==> Habilitando login sem senha para liveuser (o PAM do GDM já reconhece esse grupo nativamente)..."
+echo "==> Habilitando login sem senha para liveuser via PAM (grupo nopasswdlogin)..."
+# IMPORTANTE: ao contrário do Ubuntu, o Debian NÃO reconhece o grupo
+# "nopasswdlogin" nativamente. Sem essa regra no PAM do GDM, o AutomaticLogin
+# ainda funciona para o primeiro boot, mas qualquer prompt de senha do GDM
+# (troca de usuário, tela de bloqueio, etc.) continuaria pedindo senha
+# mesmo com o usuário no grupo. Por isso adicionamos a regra manualmente.
 groupadd -f nopasswdlogin
 usermod -aG nopasswdlogin liveuser
+
+for pamfile in gdm-password gdm-autologin; do
+    if [ -f "/etc/pam.d/${pamfile}" ] && ! grep -q "pam_succeed_if.so user ingroup nopasswdlogin" "/etc/pam.d/${pamfile}"; then
+        sed -i '0,/^auth/s//auth\tsufficient\tpam_succeed_if.so user ingroup nopasswdlogin\nauth/' "/etc/pam.d/${pamfile}"
+    fi
+done
 
 echo "==> Configurando autologin no GDM..."
 mkdir -p /etc/gdm3
@@ -92,7 +102,20 @@ XSession=plasmax11
 SystemAccount=false
 ACCOUNTS
 
-systemctl enable gdm3
+echo "==> Habilitando serviços de boot..."
+# CORREÇÃO: o pacote gdm3 no Debian/trixie não fornece mais uma unit chamada
+# "gdm3.service" — a unit real chama-se "gdm.service" (gdm3.service, quando
+# existe, é apenas um alias). "systemctl enable gdm3" falhava aqui com
+# "Unit gdm3.service could not be found", o que abortava o build inteiro
+# por causa do "set -e". Agora detectamos o nome correto da unit.
+if systemctl list-unit-files | grep -q '^gdm\.service'; then
+    systemctl enable gdm.service
+elif systemctl list-unit-files | grep -q '^gdm3\.service'; then
+    systemctl enable gdm3.service
+else
+    echo "AVISO: nenhuma unit do GDM encontrada para habilitar." >&2
+fi
+
 systemctl enable NetworkManager
 systemctl enable accounts-daemon
 systemctl enable dbus
