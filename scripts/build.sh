@@ -39,11 +39,16 @@ sudo cp config/packages.list     "$ROOTFS/tmp/packages.list"
 sudo cp scripts/chroot-setup.sh  "$ROOTFS/tmp/chroot-setup.sh"
 sudo chmod +x "$ROOTFS/tmp/chroot-setup.sh"
 
-echo "==> Copiando configuração do Calamares..."
-# Inclui branding.desc, settings.conf e os módulos (netinstall, displaymanager,
-# bootloader) já direto no destino final do sistema instalado/live.
-sudo mkdir -p "$ROOTFS/etc/calamares"
-sudo cp -r config/calamares/. "$ROOTFS/etc/calamares/"
+echo "==> Copiando configuração do Calamares (staging, aplicada depois do apt)..."
+# NÃO copiamos direto pra /etc/calamares aqui. O pacote calamares-settings-debian
+# (instalado como Recommends do pacote calamares) tem um post-install script
+# que gerencia esses mesmos arquivos (settings.conf, branding.desc etc) e
+# quebra se já encontrar um arquivo nosso no lugar antes dele rodar. Por isso
+# copiamos pra um staging em /tmp, e o chroot-setup.sh só move pra
+# /etc/calamares DEPOIS que o apt-get install (e a remoção do
+# calamares-settings-debian) já rodaram.
+sudo mkdir -p "$ROOTFS/tmp/calamares-config"
+sudo cp -r config/calamares/. "$ROOTFS/tmp/calamares-config/"
 
 echo "==> Montando filesystems virtuais..."
 sudo mount --bind /proc    "$ROOTFS/proc"
