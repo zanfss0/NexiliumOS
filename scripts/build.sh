@@ -39,6 +39,12 @@ sudo cp config/packages.list     "$ROOTFS/tmp/packages.list"
 sudo cp scripts/chroot-setup.sh  "$ROOTFS/tmp/chroot-setup.sh"
 sudo chmod +x "$ROOTFS/tmp/chroot-setup.sh"
 
+echo "==> Copiando configuração do Calamares..."
+# Inclui branding.desc, settings.conf e os módulos (netinstall, displaymanager,
+# bootloader) já direto no destino final do sistema instalado/live.
+sudo mkdir -p "$ROOTFS/etc/calamares"
+sudo cp -r config/calamares/. "$ROOTFS/etc/calamares/"
+
 echo "==> Montando filesystems virtuais..."
 sudo mount --bind /proc    "$ROOTFS/proc"
 sudo mount --bind /sys     "$ROOTFS/sys"
