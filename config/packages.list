@@ -1,5 +1,8 @@
 # Pacotes base do NexiliumOS
 
+# Kernel
+linux-image-amd64
+
 # Utilitários essenciais
 sudo
 curl
@@ -27,8 +30,9 @@ accountsservice
 locales
 
 # Desktop: KDE Plasma
+# (o suporte a Wayland já vem embutido no plasma-workspace no trixie/Plasma 6,
+# não existe mais o pacote separado plasma-workspace-wayland)
 task-kde-desktop
-plasma-workspace-wayland
 gsettings-desktop-schemas
 gnome-keyring
 
