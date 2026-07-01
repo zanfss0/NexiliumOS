@@ -30,7 +30,6 @@ apt-get install -y \
 echo "==> Instalando KDE Plasma (desktop completo)..."
 apt-get install -y \
     task-kde-desktop \
-    plasma-workspace-wayland \
     firefox-esr
 
 echo "==> Instalando dependências essenciais de sessão/compositor (evita tela travada / crash no login)..."
