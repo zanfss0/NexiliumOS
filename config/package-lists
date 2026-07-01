@@ -1,0 +1,9 @@
+# Pacotes base do NexiliumOS
+sudo
+curl
+wget
+git
+nano
+network-manager
+live-boot
+live-config
