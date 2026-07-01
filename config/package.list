@@ -5,5 +5,17 @@ wget
 git
 nano
 network-manager
+network-manager-gnome
 live-boot
+live-boot-initramfs-tools
 live-config
+live-config-systemd
+systemd-sysv
+dbus
+mate-desktop-environment
+lightdm
+lightdm-gtk-greeter
+slick-greeter
+mate-terminal
+caja
+firefox-esr
