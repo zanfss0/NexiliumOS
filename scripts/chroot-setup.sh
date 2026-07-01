@@ -163,20 +163,22 @@ SOURCES
 echo "==> Atualizando índice do apt (sources.list mudou, senão contrib/non-free-firmware não aparecem)..."
 apt-get update
 
-echo "==> Instalando VirtualBox Guest Additions (aceleração gráfica em VM)..."
-apt-get install -y \
-    virtualbox-guest-utils \
-    virtualbox-guest-x11 \
-    virtualbox-guest-dkms
-# O virtualbox-guest-dkms compila o módulo do kernel usando linux-headers-amd64
-# (já incluso em packages.sh). Isso dá aceleração 3D de verdade via VMSVGA,
-# em vez de forçar renderização por software - que é o que travava o Plasma.
-# Em hardware real esses pacotes simplesmente não fazem nada (o serviço só
-# ativa se detectar que está rodando dentro do VirtualBox).
-
-systemctl enable vboxadd 2>/dev/null || true
-systemctl enable vboxadd-service 2>/dev/null || true
-systemctl enable vboxadd-x11 2>/dev/null || true
+echo "==> Aceleração gráfica em VirtualBox: nada a instalar aqui."
+# Os pacotes virtualbox-guest-utils / virtualbox-guest-x11 / virtualbox-guest-dkms
+# NÃO existem no Debian 13 (trixie) estável — só existem no repositório "sid"
+# (a Debian Wiki confirma: pacotes do VirtualBox não são oferecidos em stable
+# por falta de suporte de segurança do upstream). Tentar instalá-los aqui
+# sempre falhava com "Unable to locate package" e derrubava o build inteiro.
+#
+# O kernel do Debian já traz embutidos os módulos vboxguest/vboxvideo/vboxsf
+# (o pacote virtual "virtualbox-guest-modules" já é satisfeito pelo pacote
+# linux-image-amd64 normal), então mouse integration e aceleração de vídeo
+# básica em VM já funcionam sem pacote nenhum. O que fica faltando é o
+# VBoxService (clipboard compartilhado, drag-and-drop, sincronismo de
+# horário) — se quiserem isso no futuro, dá pra instalar via o pacote
+# "virtualbox-guest-additions-iso" (esse sim existe no trixie) montando a
+# ISO oficial e rodando o instalador dela, ou habilitando o repo Fast Track
+# da Debian (https://fasttrack.debian.net/) especificamente pra isso.
 
 echo "==> Forçando target gráfico..."
 systemctl set-default graphical.target
