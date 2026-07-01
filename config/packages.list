@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Pacotes base do NexiliumOS
+# Este arquivo é usado (source) pelo chroot-setup.sh, não é executado sozinho.
+
+PACKAGES=(
+    # Utilitários essenciais
+    sudo
+    curl
+    wget
+    git
+    nano
+
+    # Kernel
+    linux-image-amd64
+    linux-headers-amd64
+
+    # Rede
+    network-manager
+    plasma-nm
+
+    # Live system
+    live-boot
+    live-boot-initramfs-tools
+    live-config
+    live-config-systemd
+    systemd-sysv
+
+    # Base de sessão / D-Bus / Polkit
+    dbus
+    dbus-user-session
+    polkitd
+    pkexec
+    accountsservice
+    locales
+
+    # Desktop: KDE Plasma
+    # (o suporte a Wayland já vem embutido no plasma-workspace no trixie/Plasma 6,
+    # não existe mais o pacote separado plasma-workspace-wayland)
+    task-kde-desktop
+    gsettings-desktop-schemas
+    gnome-keyring
+
+    # Display Manager: GDM
+    gdm3
+
+    # Suporte gráfico (Xorg/Xwayland + fallback de renderização)
+    xserver-xorg
+    mesa-utils
+    libgl1-mesa-dri
+    libglx-mesa0
+
+    # Navegador
+    firefox-esr
+
+    # Instalador
+    calamares
+    calamares-settings-debian
+    parted
+    dosfstools
+    rsync
+    squashfs-tools
+    grub-pc-bin
+    grub-efi-amd64-bin
+    grub-common
+    os-prober
+    efibootmgr
+
+    # VirtualBox Guest Additions (necessário para o virtualbox-guest-dkms compilar)
+    build-essential
+    dkms
+)
