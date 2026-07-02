@@ -29,9 +29,11 @@ images:
     # por enquanto, até vocês terem uma arte definitiva.
     productWelcome:         "welcome-blank.png"
 
+slideshowAPI: 1
+slideshow: "show.qml"
+
 style:
    sidebarBackground:    "#1B1D23"
    sidebarText:          "#FFFFFF"
    sidebarTextSelect:    "#3D7EFF"
    sidebarTextHighlight: "#3D7EFF"
-
